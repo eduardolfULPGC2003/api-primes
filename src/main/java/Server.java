@@ -14,6 +14,7 @@ import java.util.List;
 import static spark.Spark.*;
 
 public class Server {
+    private static Integer PRIMES_GUARANTEED = 7919;
     private String path;
 
     public Server(String path) {
@@ -22,6 +23,7 @@ public class Server {
 
     public void start(){
         Spark.port(4567);
+        // Operations for the API
         get("v1/prime", this::isPrime);
         post("v1/prime", this::postPrime);
     }
@@ -33,23 +35,8 @@ public class Server {
     }
 
     private String writePrime(Integer num) throws IOException, CsvValidationException {
-        List<Integer> integers = new ArrayList<>();
-        CSVReader reader = new CSVReader(new FileReader(this.path));
-        // Read all lines from the CSV file
-        String[] primeNumbers;
-        while ((primeNumbers = reader.readNext()) != null) {
-            for (String prime : primeNumbers) {
-                if (!prime.isEmpty()) { // Check if the string is not empty
-                    integers.add(Integer.parseInt(prime));
-                }
-            }
-        }
-        integers.add(num);
-        Collections.sort(integers);
-        BufferedWriter writer = new BufferedWriter(new FileWriter(this.path));
-        for (Integer number : integers) {
-            writer.write(number + ",");
-        }
+        BufferedWriter writer = new BufferedWriter(new FileWriter(this.path, true));
+        writer.write(num + ",");
         writer.close();
         return "File updated succesfully";
     }
@@ -59,13 +46,14 @@ public class Server {
             Integer num = Integer.parseInt(req.queryParams("number"));
             if (num <= 0)
                 halt(400, "Negative number or 0");
+            // Ask the method readPrimes to read the File
             switch(readPrimes(num)){
                 case 0:
                     return toJson(false);
                 case 1:
                     return toJson(true);
                 default:
-                    return toJson(true+"|need for calculation");
+                    return toJson(false+"|need for calculation");
             }
         }catch (NumberFormatException e) {
             halt(400, "Could not parse to integer");
@@ -86,13 +74,16 @@ public class Server {
             for (String prime : primeNumbers) {
                 if (!prime.isEmpty()) { // Check if the string is not empty
                     int primeNumber = Integer.parseInt(prime);
-                    if (num < primeNumber)
+                    // The file only guarantees the first 1000 primes
+                    if (primeNumber > num & primeNumber <= PRIMES_GUARANTEED)
                         return 0;
+                    // The number is in the File -> is prime
                     if (num == primeNumber)
                         return 1;
                 }
             }
         }
+        // Whole file read, number not found, need for calculation
         return 2;
     }
 

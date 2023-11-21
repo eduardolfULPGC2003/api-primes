@@ -13,6 +13,7 @@ import static java.lang.Thread.sleep;
 public class Client {
     public static void main(String[] args) throws IOException, InterruptedException, CsvValidationException {
         Scanner scanner = new Scanner(System.in);
+        // Will run endlessly until -1 is introduced
         while (true) {
             System.out.println("Introduce a number: ");
             int number = scanner.nextInt();
@@ -21,6 +22,7 @@ public class Client {
                 break;
             }
             try {
+                // Do a request to the server
                 String json = Jsoup.connect("http://localhost:4567/v1/prime?number=" + number)
                         .validateTLSCertificates(false)
                         .timeout(60000)
@@ -28,10 +30,13 @@ public class Client {
                         .method(Connection.Method.GET)
                         .maxBodySize(0).execute().body();
                 String[] res = json.split("\\|");
+                // false|need for calculation
                 if (res.length == 2){
+                    // The client calculate if the number is prime
                     if (!calculatePrime(number))
                         System.out.println("Is "+number+" prime?: false");
                     else {
+                        // The number is prime and not in the file: POST request
                         System.out.println("Is "+number+" prime?: true");
                         String post = Jsoup.connect("http://localhost:4567/v1/prime?number=" + number)
                                 .validateTLSCertificates(false)
