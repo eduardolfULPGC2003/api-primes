@@ -11,7 +11,15 @@ import java.util.Scanner;
 import static java.lang.Thread.sleep;
 
 public class Client {
-    public static void main(String[] args) throws IOException, InterruptedException, CsvValidationException {
+
+    private Integer port;
+
+    public Client(Integer port) throws IOException {
+        this.port = port;
+        this.start();
+    }
+
+    private void start() throws IOException {
         Scanner scanner = new Scanner(System.in);
         // Will run endlessly until -1 is introduced
         while (true) {
@@ -23,7 +31,7 @@ public class Client {
             }
             try {
                 // Do a request to the server
-                String json = Jsoup.connect("http://localhost:4567/v1/prime?number=" + number)
+                String json = Jsoup.connect("http://localhost:"+port+"/v1/prime?number=" + number)
                         .validateTLSCertificates(false)
                         .timeout(60000)
                         .ignoreContentType(true)
@@ -38,7 +46,7 @@ public class Client {
                     else {
                         // The number is prime and not in the file: POST request
                         System.out.println("Is "+number+" prime?: true");
-                        String post = Jsoup.connect("http://localhost:4567/v1/prime?number=" + number)
+                        String post = Jsoup.connect("http://localhost:"+port+"/v1/prime?number=" + number)
                                 .validateTLSCertificates(false)
                                 .timeout(60000)
                                 .ignoreContentType(true)
@@ -54,7 +62,10 @@ public class Client {
                 System.out.println("Error: " + e);
             }
         }
+    }
 
+    public static void main(String[] args) throws IOException, InterruptedException, CsvValidationException {
+        new Client(4567);
     }
 
     private static boolean calculatePrime(int number) {

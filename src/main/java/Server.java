@@ -21,6 +21,7 @@ public class Server {
     public Server(String path, Integer port) {
         this.port = port;
         this.path = path;
+        this.start();
     }
 
     public void start() {
@@ -94,6 +95,6 @@ public class Server {
     }
 
     public static void main(String[] args) {
-        new Server("C:/Users/Eduardo/IdeaProjects/api-primes/primes.csv", 4567).start();
+        new Server("C:/Users/Eduardo/IdeaProjects/api-primes/primes.csv", 4567);
     }
 }
