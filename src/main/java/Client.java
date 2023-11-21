@@ -23,7 +23,7 @@ public class Client {
             }
             try {
                 // Do a request to the server
-                String json = Jsoup.connect("http://localhost:567/v1/prime?number=" + number)
+                String json = Jsoup.connect("http://localhost:4567/v1/prime?number=" + number)
                         .validateTLSCertificates(false)
                         .timeout(60000)
                         .ignoreContentType(true)
