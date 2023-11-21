@@ -16,13 +16,15 @@ import static spark.Spark.*;
 public class Server {
     private static Integer PRIMES_GUARANTEED = 7919;
     private String path;
+    private Integer port;
 
-    public Server(String path) {
+    public Server(String path, Integer port) {
+        this.port = port;
         this.path = path;
     }
 
-    public void start(){
-        Spark.port(4567);
+    public void start() {
+        Spark.port(port);
         // Operations for the API
         get("v1/prime", this::isPrime);
         post("v1/prime", this::postPrime);
@@ -92,6 +94,6 @@ public class Server {
     }
 
     public static void main(String[] args) {
-        new Server("C:/Users/Eduardo/IdeaProjects/api-primes/primes.csv").start();
+        new Server("C:/Users/Eduardo/IdeaProjects/api-primes/primes.csv", 4567).start();
     }
 }
