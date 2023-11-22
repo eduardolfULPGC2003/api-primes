@@ -1,6 +1,8 @@
 import com.google.gson.Gson;
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvValidationException;
+import org.jsoup.Connection;
+import org.jsoup.Jsoup;
 import spark.Request;
 import spark.Response;
 import spark.Spark;
@@ -14,6 +16,8 @@ import java.util.List;
 import static spark.Spark.*;
 
 public class Server {
+    private List<Integer> servers = new ArrayList<>();
+    private List<Integer> newPrimes = new ArrayList<>();
     private static Integer PRIMES_GUARANTEED = 7919;
     private String path;
     private Integer port;
@@ -24,29 +28,34 @@ public class Server {
         this.start();
     }
 
-    public void start() {
+    private void start() {
         Spark.port(port);
         // Operations for the API
         get("v1/prime", this::isPrime);
         post("v1/prime", this::postPrime);
     }
 
-    private String postPrime(Request req, Response res) throws CsvValidationException, IOException {
+    private String postPrime(Request req, Response res) throws IOException {
         Integer num = Integer.parseInt(req.queryParams("number"));
-        String intro = writePrime(num);
-        return intro;
+        if (!newPrimes.contains(num)) {
+            String intro = writePrime(num);
+            newPrimes.add(num);
+            return intro;
+        }
+        else return "Number already contained";
     }
 
-    private String writePrime(Integer num) throws IOException, CsvValidationException {
-        BufferedWriter writer = new BufferedWriter(new FileWriter(this.path, true));
-        writer.write(num + ",");
-        writer.close();
-        return "File updated succesfully";
+    private String writePrime(Integer num) throws IOException {
+
+            BufferedWriter writer = new BufferedWriter(new FileWriter(this.path, true));
+            writer.write(num + ",");
+            writer.close();
+            return "File updated successfully";
     }
 
     private String isPrime(Request req, Response res){
         try {
-            Integer num = Integer.parseInt(req.queryParams("number"));
+            int num = Integer.parseInt(req.queryParams("number"));
             if (num <= 0)
                 halt(400, "Negative number or 0");
             // Ask the method readPrimes to read the File
@@ -60,9 +69,7 @@ public class Server {
             }
         }catch (NumberFormatException e) {
             halt(400, "Could not parse to integer");
-        } catch (CsvValidationException e) {
-            throw new RuntimeException(e);
-        } catch (IOException e) {
+        } catch (CsvValidationException | IOException e) {
             throw new RuntimeException(e);
         }
         return null;
@@ -94,7 +101,24 @@ public class Server {
         return new Gson().toJson(o);
     }
 
+    private void stop(){Spark.stop();}
+
+    public String synchronise() throws IOException {
+        for (Integer server: servers) {
+            for(Integer newPrime: newPrimes){
+                String json = Jsoup.connect("http://localhost:"+server+"/v1/prime?number=" + newPrime)
+                        .validateTLSCertificates(false)
+                        .timeout(60000)
+                        .ignoreContentType(true)
+                        .method(Connection.Method.POST)
+                        .maxBodySize(0).execute().body();
+            }
+        }
+        return "Transaction completed";
+    }
+
     public static void main(String[] args) {
-        new Server("C:/Users/Eduardo/IdeaProjects/api-primes/primes.csv", 4567);
+        Server server = new Server("C:/Users/Eduardo/IdeaProjects/api-primes/primes.csv", 4567);
+        //server.stop();
     }
 }
