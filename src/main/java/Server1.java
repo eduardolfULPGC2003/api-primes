@@ -119,6 +119,7 @@ public class Server1 implements Server{
                             .maxBodySize(0).execute().body();
                 }
             }
+            newPrimes.clear();
             return "Transaction completed";
         }
     }
