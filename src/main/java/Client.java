@@ -64,15 +64,15 @@ public class Client {
         }
     }
 
-    public static void main(String[] args) throws IOException, InterruptedException, CsvValidationException {
-        new Client(4567);
-    }
-
     private static boolean calculatePrime(int number) {
         for (int i = 2; i < number; i++) {
             if (number % i == 0)
                 return false;
         }
         return true;
+    }
+
+    public static void main(String[] args) throws IOException, InterruptedException, CsvValidationException {
+        new Client(4569);
     }
 }
