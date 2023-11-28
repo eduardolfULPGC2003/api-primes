@@ -127,7 +127,7 @@ public class Server1 implements Server{
     public static void main(String[] args) throws IOException {
         List<Integer> servers = new ArrayList<>();
         servers.add(4568);servers.add(4569);
-        Server1 server = new Server1("C:/Users/Eduardo/IdeaProjects/api-primes/primes1.csv", 4567, servers);
+        Server1 server = new Server1("primes1.csv", 4567, servers);
         while (true){
             System.out.println("Press enter to synchronise");
             new Scanner(System.in).nextLine();

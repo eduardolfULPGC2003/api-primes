@@ -23,7 +23,7 @@ public class Client {
         Scanner scanner = new Scanner(System.in);
         // Will run endlessly until -1 is introduced
         while (true) {
-            System.out.println("Introduce a number: ");
+            System.out.println("Introduce a number (-1 for exit): ");
             int number = scanner.nextInt();
             if (number == -1){
                 System.out.println("Closing connection");
