@@ -17,7 +17,6 @@ import static spark.Spark.*;
 
 public class Server1 implements Server{
     private List<Integer> servers;
-    private List<Integer> newPrimes = new ArrayList<>();
     private static Integer PRIMES_GUARANTEED = 7919;
     private String path;
     private Integer port;
@@ -33,21 +32,17 @@ public class Server1 implements Server{
         Spark.port(port);
         // Operations for the API
         get("v1/prime", this::isPrime);
+        get("v1/prime/server", this::isPrimeServer);
         post("v1/prime", this::postPrime);
     }
 
     public String postPrime(Request req, Response res) throws IOException {
         Integer num = Integer.parseInt(req.queryParams("number"));
-        if (!newPrimes.contains(num)) {
-            String intro = writePrime(num);
-            newPrimes.add(num);
-            return intro;
-        }
-        else return "Number already contained";
+        String intro = writePrime(num);
+        return intro;
     }
 
     private String writePrime(Integer num) throws IOException {
-
             BufferedWriter writer = new BufferedWriter(new FileWriter(this.path, true));
             writer.write(num + ",");
             writer.close();
@@ -55,6 +50,40 @@ public class Server1 implements Server{
     }
 
     public String isPrime(Request req, Response res){
+        try {
+            int num = Integer.parseInt(req.queryParams("number"));
+            if (num <= 0)
+                halt(400, "Negative number or 0");
+            // Ask the method readPrimes to read the File
+            switch(readPrimes(num)){
+                case 0:
+                    return toJson(false);
+                case 1:
+                    return toJson(true);
+                default:
+                    for (int server: servers){
+                        String json = Jsoup.connect("http://localhost:"+server+"/v1/prime/server?number=" + num)
+                                .validateTLSCertificates(false)
+                                .timeout(60000)
+                                .ignoreContentType(true)
+                                .method(Connection.Method.GET)
+                                .maxBodySize(0).execute().body();
+                        if (json.split("\\|").length==1){
+                            if (json.equals("true")) writePrime(num);
+                            return json;
+                        }
+                    }
+                    return toJson(false+"|need for calculation");
+            }
+        }catch (NumberFormatException e) {
+            halt(400, "Could not parse to integer");
+        } catch (CsvValidationException | IOException e) {
+            throw new RuntimeException(e);
+        }
+        return null;
+    }
+
+    private String isPrimeServer(Request req, Response res) {
         try {
             int num = Integer.parseInt(req.queryParams("number"));
             if (num <= 0)
@@ -86,15 +115,20 @@ public class Server1 implements Server{
                 if (!prime.isEmpty()) { // Check if the string is not empty
                     int primeNumber = Integer.parseInt(prime);
                     // The file only guarantees the first 1000 primes
-                    if (primeNumber > num & primeNumber <= PRIMES_GUARANTEED)
+                    if (primeNumber > num & primeNumber <= PRIMES_GUARANTEED) {
+                        reader.close();
                         return 0;
+                    }
                     // The number is in the File -> is prime
-                    if (num == primeNumber)
+                    if (num == primeNumber) {
+                        reader.close();
                         return 1;
+                    }
                 }
             }
         }
         // Whole file read, number not found, need for calculation
+        reader.close();
         return 2;
     }
 
@@ -104,34 +138,9 @@ public class Server1 implements Server{
 
     public void stop(){Spark.stop();}
 
-    public String synchronise() throws IOException {
-        if (newPrimes.size()==0|servers.size()==0){
-            return "Nothing to synchronise";
-        }
-        else {
-            for (Integer server : servers) {
-                for (Integer newPrime : newPrimes) {
-                    String json = Jsoup.connect("http://localhost:" + server + "/v1/prime?number=" + newPrime)
-                            .validateTLSCertificates(false)
-                            .timeout(60000)
-                            .ignoreContentType(true)
-                            .method(Connection.Method.POST)
-                            .maxBodySize(0).execute().body();
-                }
-            }
-            newPrimes.clear();
-            return "Transaction completed";
-        }
-    }
-
     public static void main(String[] args) throws IOException {
         List<Integer> servers = new ArrayList<>();
         servers.add(4568);servers.add(4569);
         Server1 server = new Server1("primes1.csv", 4567, servers);
-        while (true){
-            System.out.println("Press enter to synchronise");
-            new Scanner(System.in).nextLine();
-            System.out.println(server.synchronise());
-        }
     }
 }

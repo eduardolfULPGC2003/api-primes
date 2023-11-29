@@ -9,5 +9,4 @@ public interface Server {
     String postPrime(Request req, Response res) throws IOException;
     String isPrime(Request req, Response res);
     void stop();
-    String synchronise() throws IOException;
 }
