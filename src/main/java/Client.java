@@ -41,12 +41,20 @@ public class Client {
                 // false|need for calculation
                 if (res.length == 2){
                     // The client calculate if the number is prime
-                    if (!calculatePrime(number))
-                        System.out.println("Is "+number+" prime?: false");
+                    if (!calculatePrime(number)) {
+                        System.out.println("Is " + number + " prime?: false");
+                        String post = Jsoup.connect("http://localhost:" + port + "/v1/prime?number=" + number+"&prime=NO")
+                                .validateTLSCertificates(false)
+                                .timeout(60000)
+                                .ignoreContentType(true)
+                                .method(Connection.Method.POST)
+                                .maxBodySize(0).execute().body();
+                        System.out.println(post);
+                    }
                     else {
                         // The number is prime and not in the file: POST request
                         System.out.println("Is "+number+" prime?: true");
-                        String post = Jsoup.connect("http://localhost:"+port+"/v1/prime?number=" + number)
+                        String post = Jsoup.connect("http://localhost:"+port+"/v1/prime?number=" + number+"&prime=YES")
                                 .validateTLSCertificates(false)
                                 .timeout(60000)
                                 .ignoreContentType(true)

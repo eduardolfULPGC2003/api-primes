@@ -63,6 +63,7 @@ public class Server2 implements Server{
                 case 1:
                     return toJson(true);
                 default:
+                    if (servers.size()!=0)
                     for (int server: servers){
                         String json = Jsoup.connect("http://localhost:"+server+"/v1/prime/server?number=" + num)
                                 .validateTLSCertificates(false)
