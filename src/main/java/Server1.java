@@ -169,7 +169,7 @@ public class Server1 implements Server{
 
     public static void main(String[] args) throws IOException {
         List<Integer> servers = new ArrayList<>();
-        //servers.add(4568);servers.add(4569);
+        servers.add(4568);servers.add(4569);
         Server1 server = new Server1("files/primes/primes1.csv",
                 "files/non-primes/non-primes1.csv", 4567, servers);
     }
